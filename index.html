@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Конвертер и упаковщик файлов</title>
+<meta name="description" content="Конвертация изображений и текстовых файлов, упаковка в ZIP. Работает локально в браузере.">
+<meta name="theme-color" content="#111113">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="header-back" id="backBtn" title="Назад">
+        <i data-lucide="arrow-left" width="16" height="16"></i>
+      </div>
+      <div class="header-text">
+        <div class="header-title" id="headerTitle">Что будем делать?</div>
+        <div class="header-sub" id="headerSub">Выбери один из трёх режимов</div>
+      </div>
+      <div class="header-back visible" id="themeBtn" title="Сменить тему">
+        <span class="theme-icon theme-icon-moon"><i data-lucide="moon" width="16" height="16"></i></span>
+        <span class="theme-icon theme-icon-sun"><i data-lucide="sun" width="16" height="16"></i></span>
+      </div>
+    </div>
+
+    <div class="mode-screen" id="modeScreen">
+      <div class="mode-card" data-mode="image">
+        <div class="mode-icon image"><i data-lucide="image" width="22" height="22"></i></div>
+        <div>
+          <div class="mode-title">Изображение</div>
+          <div class="mode-desc">Меняй формат, качество и размер фото (PNG, JPG, WEBP и др.)</div>
+        </div>
+      </div>
+
+      <div class="mode-card" data-mode="text">
+        <div class="mode-icon text"><i data-lucide="file-code" width="22" height="22"></i></div>
+        <div>
+          <div class="mode-title">Текст и код</div>
+          <div class="mode-desc">Меняй расширение .txt, .html, .js, .json, редактируй и копируй</div>
+        </div>
+      </div>
+
+      <div class="mode-card" data-mode="folder">
+        <div class="mode-icon folder"><i data-lucide="folder-archive" width="22" height="22"></i></div>
+        <div>
+          <div class="mode-title">Папка</div>
+          <div class="mode-desc">Собери файлы и папки, сконвертий фото и скачай всё одним ZIP</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ИЗОБРАЖЕНИЕ -->
+    <div class="work-screen" id="imageScreen">
+      <div class="dropzone" id="imageDropzone">
+        <div class="drop-icon"><i data-lucide="image-plus" width="22" height="22"></i></div>
+        <div class="drop-title">Перетащи фото сюда</div>
+        <div class="drop-sub">PNG · JPG · WEBP · GIF · SVG · BMP · или вставь из буфера</div>
+      </div>
+
+      <div class="preview-box" id="imagePreviewBox" style="display:none;">
+        <img class="preview-image" id="imagePreview" alt="preview">
+      </div>
+
+      <div class="file-card" id="imageFileCard" style="display:none;">
+        <div class="file-row">
+          <div class="file-icon"><i data-lucide="image" width="18" height="18"></i></div>
+          <div class="file-info">
+            <div class="file-name" id="imageFileName" contenteditable="false" spellcheck="false"></div>
+            <div class="file-size" id="imageFileSize"></div>
+          </div>
+          <button class="icon-btn" id="imageRemove" title="Удалить">
+            <i data-lucide="x" width="16" height="16"></i>
+          </button>
+        </div>
+        <div class="format-row">
+          <span class="format-label">Формат:</span>
+          <select class="format-select" id="imageFormat">
+            <option value="">— как было —</option>
+            <option value="png">PNG</option>
+            <option value="jpeg">JPG</option>
+            <option value="webp">WEBP</option>
+            <option value="bmp">BMP</option>
+          </select>
+        </div>
+        <div class="format-row" id="imageQualityRow" style="display:none;">
+          <span class="format-label">Качество:</span>
+          <input type="range" class="slider" id="imageQuality" min="10" max="100" step="1" value="92">
+          <span class="slider-value" id="imageQualityValue">92%</span>
+        </div>
+
+        <div class="format-row" id="imageSizeRow" style="display:none;">
+          <span class="format-label">Размер:</span>
+          <input type="number" class="num-input" id="imageWidth" min="1" max="20000" inputmode="numeric">
+          <span class="format-label">×</span>
+          <input type="number" class="num-input" id="imageHeight" min="1" max="20000" inputmode="numeric">
+          <button class="icon-btn keep" id="imageLock" title="Сохранять пропорции">
+            <i data-lucide="lock" width="14" height="14"></i>
+          </button>
+          <button class="icon-btn keep" id="imageSizeReset" title="Вернуть исходный размер">
+            <i data-lucide="maximize" width="14" height="14"></i>
+          </button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="imageDownload">
+            <i data-lucide="download" width="14" height="14"></i> Скачать
+          </button>
+          <button class="btn" id="imageCopy" title="Скопировать картинку в буфер">
+            <i data-lucide="clipboard" width="14" height="14"></i> Копировать
+          </button>
+        </div>
+        <div class="hint">Нажми на название, чтобы изменить его</div>
+      </div>
+    </div>
+
+    <!-- ТЕКСТ -->
+    <div class="work-screen" id="textScreen">
+      <div class="dropzone" id="textDropzone">
+        <div class="drop-icon"><i data-lucide="file-code-2" width="22" height="22"></i></div>
+        <div class="drop-title">Перетащи текстовый файл</div>
+        <div class="drop-sub">TXT · HTML · JS · CSS · JSON · MD · CSV · XML · или вставь из буфера</div>
+      </div>
+
+      <button class="btn" id="textPasteBtn">
+        <i data-lucide="clipboard-paste" width="14" height="14"></i> Вставить текст из буфера
+      </button>
+
+      <div class="preview-box" id="textPreviewBox" style="display:none;">
+        <div class="preview-text" id="textPreview"></div>
+        <textarea class="preview-text preview-editor" id="textEditor" spellcheck="false" style="display:none;"></textarea>
+      </div>
+
+      <div class="file-card" id="textFileCard" style="display:none;">
+        <div class="file-row">
+          <div class="file-icon"><i data-lucide="file-text" width="18" height="18"></i></div>
+          <div class="file-info">
+            <div class="file-name" id="textFileName" contenteditable="false" spellcheck="false"></div>
+            <div class="file-size" id="textFileSize"></div>
+          </div>
+          <button class="icon-btn keep" id="textEdit" title="Редактировать содержимое">
+            <i data-lucide="pencil" width="16" height="16"></i>
+          </button>
+          <button class="icon-btn" id="textRemove" title="Удалить">
+            <i data-lucide="x" width="16" height="16"></i>
+          </button>
+        </div>
+        <div class="format-row">
+          <span class="format-label">Формат:</span>
+          <select class="format-select" id="textFormat">
+            <option value="">— как было —</option>
+            <option value="txt">TXT</option>
+            <option value="html">HTML</option>
+            <option value="js">JS</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            <option value="md">MD</option>
+            <option value="csv">CSV</option>
+            <option value="xml">XML</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="textDownload">
+            <i data-lucide="download" width="14" height="14"></i> Скачать
+          </button>
+          <button class="btn" id="textCopy" title="Скопировать текст в буфер">
+            <i data-lucide="clipboard" width="14" height="14"></i> Копировать
+          </button>
+        </div>
+        <div class="hint">Нажми на название, чтобы изменить его</div>
+      </div>
+    </div>
+
+    <!-- ПАПКА -->
+    <div class="work-screen" id="folderScreen">
+      <div class="dropzone" id="folderDropzone">
+        <div class="drop-icon"><i data-lucide="folder-plus" width="22" height="22"></i></div>
+        <div class="drop-title">Перетащи файлы или папку</div>
+        <div class="drop-sub">Структура вложенных папок сохранится в архиве</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="pickFilesBtn">
+          <i data-lucide="files" width="14" height="14"></i> Файлы
+        </button>
+        <button class="btn" id="pickDirBtn">
+          <i data-lucide="folder-open" width="14" height="14"></i> Папку
+        </button>
+      </div>
+
+      <input type="text" class="folder-name-input" id="folderName" placeholder="Название папки" value="my-folder" maxlength="40">
+
+      <div class="format-row">
+        <span class="format-label">Фото в:</span>
+        <select class="format-select" id="folderImageFormat">
+          <option value="">— без конвертации —</option>
+          <option value="png">PNG</option>
+          <option value="jpeg">JPG</option>
+          <option value="webp">WEBP</option>
+        </select>
+      </div>
+
+      <div class="format-row" id="folderQualityRow" style="display:none;">
+        <span class="format-label">Качество:</span>
+        <input type="range" class="slider" id="folderQuality" min="10" max="100" step="1" value="85">
+        <span class="slider-value" id="folderQualityValue">85%</span>
+      </div>
+
+      <div class="folder-toolbar">
+        <select class="format-select" id="folderSort" title="Сортировка">
+          <option value="none">Без сортировки</option>
+          <option value="name">По имени</option>
+          <option value="size">По размеру</option>
+        </select>
+        <button class="btn" id="folderClear">
+          <i data-lucide="trash-2" width="14" height="14"></i> Очистить
+        </button>
+      </div>
+
+      <div class="folder-summary" id="folderSummary"></div>
+
+      <div class="folder-list" id="folderList">
+        <div class="empty-state" id="folderEmpty">Папка пока пуста</div>
+      </div>
+
+      <button class="btn btn-primary" id="folderDownload" disabled>
+        <i data-lucide="download" width="14" height="14"></i> Скачать ZIP
+      </button>
+    </div>
+
+    <input type="file" id="fileInput" style="display:none;">
+    <input type="file" id="dirInput" webkitdirectory directory multiple style="display:none;">
+  </div>
+
+  <!-- ============================================ -->
+  <!-- ======= ОВЕРЛЕЙ РЕЗУЛЬТАТА (УСПЕХ / ОШИБКА) == -->
+  <!-- ============================================ -->
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-card">
+      <div class="check-wrapper">
+        <div class="wave"></div>
+        <div class="wave"></div>
+        <div class="wave"></div>
+
+        <div class="check-circle">
+          <!-- SVG галочка (успех) -->
+          <svg class="check-svg result-icon success" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+
+          <!-- SVG крестик (ошибка) -->
+          <svg class="check-svg cross-svg result-icon error" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3">
+            <path d="M6 6L18 18" />
+            <path d="M18 6L6 18" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="result-title" id="resultTitle">Файл скачан!</div>
+      <div class="result-name" id="resultName"></div>
+      <div class="result-sub" id="resultSub">Проверь папку загрузок</div>
+    </div>
+  </div>
+
+  <!-- Тосты для мелких действий -->
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
