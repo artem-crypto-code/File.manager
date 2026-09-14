@@ -24,4 +24,4 @@
 Запоминание последнего открытого режима (localStorage)
 PWA: manifest + Service Worker (sw.js) — офлайн-работа и установка как приложение
 Работает офлайн, файлы никуда не отправляются — вся обработка локально
-ссылка:
+ссылка: https://artem-crypto-code.github.io/File.manager/
